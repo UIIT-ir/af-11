@@ -53,12 +53,13 @@
     }
 
 
-    function myFunction(uid,inputValue1,inputValue2,inputValue3) {
-      document.getElementById("output").textContent = "uid: " + uid + "name: " + inputValue1 + " tele: "+inputValue2+" company: "+inputValue3;
+    function myFunction(uid,inputValue1,inputValue2,inputValue3,inputValue4) {
+      document.getElementById("output").textContent = "uid: " + uid + "name: " + inputValue1 + " tele: "+inputValue2+" company: "+inputValue3+"address:"+inputValue4;
       db.collection("users").doc(uid).update({
         name: inputValue1,
         tele: inputValue2,
-        company: inputValue3
+        company: inputValue3,
+        address: inputValue4
       })
         .then(() => {
           console.log("Document successfully written!");
@@ -72,7 +73,9 @@
       const inputValue1 = document.getElementById("nameInput").value;
       const inputValue2 = document.getElementById("teleInput").value;
       const inputValue3 = document.getElementById("companyput").value;
-      myFunction(uid,inputValue1,inputValue2,inputValue3);
+      const inputValue4 = document.getElementById("addressput").value;
+      
+      myFunction(uid,inputValue1,inputValue2,inputValue3,inputValue4);
     }
 
     function addData(uid, email) {
@@ -133,7 +136,8 @@
         <p>Name: <input type="text" id="nameInput"><\/p>
         <p>Telephone: <input type="text" id="teleInput"><\/p>
         <p>company:<input type="text" id="companyput"><\/p>
-        <button onclick='handleClick("${user.uid}")'>送信</button>
+        <p>address:<input type="text" id="addressput"><\/p>
+          <button onclick='handleClick("${user.uid}")'>送信</button>
         <div id="output"></div>
         <button onclick='getContainer("${user.uid}")'>コンテナ情報取得</button>
         <div id="output2"></div>
