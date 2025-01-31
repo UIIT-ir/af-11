@@ -37,20 +37,8 @@
             const userData =  doc.data();
             document.getElementById("output2").textContent = "User Data: " + JSON.stringify(userData) + "user name: "+ userData.name; // Example usage
             // permit status check
-            if(userData.adminFlag == "true"){
-              document.getElementById("output2").textContent = " admin Flag: " + userData.adminFlag; // C Data
-              db.collection("users").where("adminFlag", "==", false)
-                .get()
-                .then((querySnapshot) => {
-                    querySnapshot.forEach((doc) => {
-                        // doc.data() is never undefined for query doc snapshots
-                        document.getElementById("output2").textContent = " admin Flag: " +JSON.stringify(doc); // C Data
-                        console.log(doc.id, " => ", doc.data());
-                    });
-                })
-                .catch((error) => {
-                    console.log("Error getting documents: ", error);
-                });
+            if(userData.permitFlag == "true"){
+              document.getElementById("output2").textContent = "Container Data: " + userData.containerNumber; // Container Data
             }
 
             console.log("Document data:", doc.data());
@@ -64,14 +52,57 @@
       });
     }
 
+    function getAdmin(uid) {
+      document.getElementById("output3").textContent = "uid: " + uid ;
+      // アカウントステータス確認
+      var docRef = db.collection("users").doc(uid);
 
-    function myFunction(uid,inputValue1,inputValue2,inputValue3,inputValue4) {
-      document.getElementById("output").textContent = "uid: " + uid + "name: " + inputValue1 + " tele: "+inputValue2+" company: "+inputValue3+"address:"+inputValue4;
+      docRef.get().then((doc) => {
+          if (doc.exists) {
+            const userData =  doc.data();
+            // permit status check
+            if(userData.adminFlag == true){
+              getCustomer(uid);
+            }
+
+            console.log("Document data:", doc.data());
+          } else {
+            userData = `not administrator `;
+              // doc.data() will be undefined in this case
+            console.log("No such document!");
+          }
+      }).catch((error) => {
+          console.log("Error getting document:", error);
+      });
+        
+    }
+
+    function getCustomer(uid) {
+      document.getElementById("output5").textContent = "uid: " + uid ;
+      // アカウントステータス確認
+      var docRef = db.collection("users").doc(uid);
+
+      db.collection("users")
+        .get()
+        .then((querySnapshot) => {
+            querySnapshot.forEach((doc) => {
+                // doc.data() is never undefined for query doc snapshots
+                document.getElementById("output5").textContent += " uid: " + doc.id + " User Data: " + JSON.stringify(doc.data()); // Example usage
+                console.log(doc.id, " => ", doc.data());
+            });
+        })
+        .catch((error) => {
+            console.log("Error getting documents: ", error);
+        });
+        
+    }
+
+
+    function myFunction(uid,inputValue1,inputValue2) {
+      document.getElementById("output").textContent = "uid: " + uid + "name: " + inputValue1 + " tele: "+inputValue2;
       db.collection("users").doc(uid).update({
         name: inputValue1,
-        tele: inputValue2,
-        company: inputValue3,
-        address: inputValue4
+        tele: inputValue2
       })
         .then(() => {
           console.log("Document successfully written!");
@@ -84,10 +115,7 @@
     function handleClick(uid) {
       const inputValue1 = document.getElementById("nameInput").value;
       const inputValue2 = document.getElementById("teleInput").value;
-      const inputValue3 = document.getElementById("companyput").value;
-      const inputValue4 = document.getElementById("addressput").value;
-      
-      myFunction(uid,inputValue1,inputValue2,inputValue3,inputValue4);
+      myFunction(uid,inputValue1,inputValue2);
     }
 
     function addData(uid, email) {
@@ -105,6 +133,40 @@
         });
 
 
+    }
+
+    function permitCustomer(uid) {
+      // Add a new document in collection "users"
+      db.collection("users").doc(uid).set({
+        permitFlag: true,
+        containerNumber: 1111
+      })
+        .then(() => {
+          console.log("Document successfully written!");
+        })
+        .catch((error) => {
+          console.error("Error writing document: ", error);
+        });
+
+
+    }
+
+    function signInWithEmailPassword(email,password) {
+      //var email = "test@example.com";
+      //var password = "hunter2";
+      document.getElementById("output4").textContent = "email: " + email + " password: " + password;
+      // [START auth_signin_password]
+      firebase.auth().signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          // Signed in
+          var user = userCredential.user;
+          // ...
+        })
+        .catch((error) => {
+          var errorCode = error.code;
+          var errorMessage = error.message;
+        });
+      // [END auth_signin_password]
     }
 
     function signIn() {
@@ -147,12 +209,16 @@
         <button class="btn btn-primary" type="submit"  onClick='addData("${user.uid}","${user.email}")'>Add Data<\/button>
         <p>Name: <input type="text" id="nameInput"><\/p>
         <p>Telephone: <input type="text" id="teleInput"><\/p>
-        <p>company:<input type="text" id="companyput"><\/p>
-        <p>address:<input type="text" id="addressput"><\/p>
-          <button onclick='handleClick("${user.uid}")'>送信</button>
+        <button onclick='handleClick("${user.uid}")'>送信</button>
         <div id="output"></div>
         <button onclick='getContainer("${user.uid}")'>コンテナ情報取得</button>
         <div id="output2"></div>
+        <button onclick='getAdmin("${user.uid}")'>Get Admin User Data</button>
+        <div id="output3"></div>
+        <button onclick='getCustomer("${user.uid}")'>Get All User Data</button>
+        <div id="output5"></div>
+        <p>customer uid: <input type="text" id="cuInput"><\/p>
+        <button class="btn btn-primary" type="submit"  onClick="permitCustomer(document.getElementById('cuInput').value)">permit customer<\/button>
 
         `;
 
@@ -162,7 +228,11 @@
 
       } else {
         const signInMessage = `
-          <button class="btn btn-primary" type="submit"  onClick="signIn()">サインイン<\/button>
+          <button class="btn btn-primary" type="submit"  onClick="signIn()">Google サインイン<\/button>
+          <p>email: <input type="text" id="emailInput"><\/p>
+          <p>password: <input type="text" id="passwordInput"><\/p>
+          <button class="btn btn-primary" type="submit"  onClick="signInWithEmailPassword(document.getElementById('emailInput').value,document.getElementById('passwordInput').value)">email サインイン<\/button>
+          <div id="output4"></div>
           `;
         document.getElementById('auth').innerHTML = signInMessage;
       }
